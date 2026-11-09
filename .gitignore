@@ -2,11 +2,15 @@ notes/
 .playwright-mcp/
 node_modules/
 *.log
-# generated files of the example projects
-examples/python/.venv/
-examples/python/__pycache__/
-examples/python/.pytest_cache/
-examples/python/test-results/
-examples/kotlin/.gradle/
-examples/kotlin/.kotlin/
-examples/kotlin/build/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.venv/
+test-results/
+# generated files of the Kotlin example project
+.gradle/
+.kotlin/
+build/
+# saved browser sessions are secrets
+state.json
