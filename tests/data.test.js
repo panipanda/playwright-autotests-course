@@ -94,10 +94,13 @@ test('steps have a "do" and a "why", and language-only steps are marked', () => 
   assert.ok(total >= 20, 'only ' + total + ' steps');
 });
 
-test('every module that uses steps has them for both tracks', () => {
+test('every track gets at least three steps in every module that has steps', () => {
   for (const m of COURSE) {
+    const all = (m.body.match(/<li class="step"/g) || []).length;
+    if (!all) continue;
     const py = (m.body.match(/<li class="step" data-l="py">/g) || []).length, kt = (m.body.match(/<li class="step" data-l="kt">/g) || []).length;
-    if (py || kt) assert.ok(py > 0 && kt > 0, m.id + ' has steps for only one track');
+    assert.ok(all - kt >= 3, m.id + ' has too few steps for the Python track');
+    assert.ok(all - py >= 3, m.id + ' has too few steps for the Kotlin track');
   }
 });
 
@@ -157,7 +160,13 @@ const EX = {
   first: { py: 'python/tests/test_first.py', kt: 'kotlin/src/test/kotlin/course/FirstTest.kt' },
   base: { kt: 'kotlin/src/test/kotlin/course/BaseTest.kt' },
   locators: { py: 'python/tests/test_locators.py', kt: 'kotlin/src/test/kotlin/course/LocatorsTest.kt' },
-  actions: { py: 'python/tests/test_actions.py', kt: 'kotlin/src/test/kotlin/course/ActionsTest.kt' }
+  actions: { py: 'python/tests/test_actions.py', kt: 'kotlin/src/test/kotlin/course/ActionsTest.kt' },
+  assertions: { py: 'python/tests/test_assertions.py', kt: 'kotlin/src/test/kotlin/course/AssertionsTest.kt' },
+  'fixture-setup': { py: 'python/tests/conftest.py', kt: 'kotlin/src/test/kotlin/course/TodoFixtureTest.kt' },
+  'fixture-tests': { py: 'python/tests/test_todo_fixture.py' },
+  todopage: { py: 'python/pages/todo_page.py', kt: 'kotlin/src/test/kotlin/course/TodoPage.kt' },
+  todopom: { py: 'python/tests/test_todo_pom.py', kt: 'kotlin/src/test/kotlin/course/TodoPomTest.kt' },
+  storage: { py: 'python/tests/test_storage_state.py', kt: 'kotlin/src/test/kotlin/course/StorageStateTest.kt' }
 };
 const clean = s => s.replace(/\r/g, '').replace(/[ \t]+$/gm, '').trim();
 test('code in the course that is tagged with ex: is exactly the code in examples/', () => {

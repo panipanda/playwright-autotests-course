@@ -99,3 +99,79 @@ WIDGETS.autowait = { title: 'Hard wait or auto-wait?', tag: 'simulation', init(b
     $('[data-role=many]', b).innerHTML = '<div class="tbl"><table><thead><tr><th>Strategy</th><th>Passed</th><th>Average time</th></tr></thead><tbody>' + strategies.map(s => { const rs = runs.map(n => one(s, n)); const p = rs.filter(r => r.ok).length; const avg = rs.reduce((a, r) => a + r.t, 0) / rs.length; return `<tr><td>${s.n}</td><td class="num">${p} of 100 ${p < 100 ? '<span class="pill bad">flaky</span>' : '<span class="pill ok">stable</span>'}</td><td class="num">${avg.toFixed(1)} s</td></tr>`; }).join('') + '</tbody></table></div><p class="src">A short hard wait fails when the page is slow. A long one passes but wastes time on every run. Waiting for the condition passes as fast as the page allows.</p>';
   };
 } };
+
+/* ===== 5. Pick the right assertion ===== */
+WIDGETS.assertpick = { title: 'Pick the right assertion', tag: 'matching', init(b) {
+  const N = { visible: ['to_be_visible', 'isVisible'], hidden: ['to_be_hidden', 'isHidden'], text: ['to_have_text', 'hasText'], contain: ['to_contain_text', 'containsText'], value: ['to_have_value', 'hasValue'], count: ['to_have_count', 'hasCount'], url: ['to_have_url', 'hasURL'], checked: ['to_be_checked', 'isChecked'] };
+  const idx = state.lang === 'py' ? 0 : 1;
+  const keys = Object.keys(N);
+  const items = [
+    ['The counter must say exactly "2 items left".', 'text', 'The whole text must match, so use the text assertion.'],
+    ['A long notice must mention the word "saved" somewhere.', 'contain', 'Only a part matters. The "contain" version keeps the test from breaking when the rest of the sentence changes.'],
+    ['The table must show 3 rows.', 'count', 'A count assertion on the locator waits until the number is right.'],
+    ['The loading spinner must be gone.', 'hidden', 'The "hidden" assertion passes when the element is gone or not shown, and it retries until then.'],
+    ['The email field must contain ada@example.com.', 'value', 'The text typed into an input is its value, not its text.'],
+    ['After signing in, the browser must be on the account page.', 'url', 'The address belongs to the page, so the assertion is made on the page and not on a locator.'],
+    ['The "I agree" checkbox must be ticked.', 'checked', 'A ticked checkbox has its own assertion.'],
+    ['The success message must appear.', 'visible', 'The "visible" assertion waits for the element to appear, which is what a page that needs a moment requires.']
+  ];
+  const ids = items.map(() => uid('ap'));
+  b.innerHTML = '<p class="src">Names are shown in ' + LANG_NAME[state.lang] + ' style.</p>' + items.map((it, i) => `<div class="field" style="margin-bottom:10px"><label for="${ids[i]}">${i + 1}. ${it[0]}</label><select id="${ids[i]}"><option value="">Choose an assertion</option>${keys.map(k => `<option value="${k}">${N[k][idx]}</option>`).join('')}</select><div class="fb-slot" id="${ids[i]}-fb"></div></div>`).join('') + '<div class="row"><button class="btn" data-a="check">Check</button><span class="score" data-role="score"></span></div>';
+  $('[data-a=check]', b).onclick = () => {
+    let ok = 0;
+    items.forEach((it, i) => { const v = $('#' + ids[i], b).value; const good = v === it[1]; if (good) ok++; $('#' + ids[i] + '-fb', b).innerHTML = v === '' ? '' : `<div class="fb ${good ? 'ok' : 'bad'}">${good ? 'Correct. ' : 'Better: <code>' + N[it[1]][idx] + '</code>. '}${it[2]}</div>`; });
+    $('[data-role=score]', b).textContent = `${ok} of ${items.length} correct`;
+  };
+} };
+
+/* ===== 6. What runs when ===== */
+WIDGETS.lifecycle = { title: 'What runs when', tag: 'ordering', init(b) {
+  const py = [
+    { type: 'order', q: 'Two tests use the <code>page</code> fixture. Put what happens around <b>one</b> test in order.', items: ['The browser is launched (once for the whole run)', 'A new browser context and a new page are created', 'Your test function runs', 'The page and the context are closed'], why: 'The plugin starts the browser once, because that is expensive, then gives each test a fresh, cheap context. When the test is over, it closes the context, so nothing leaks.' },
+    { q: 'A fixture of yours has <code>yield</code> in the middle. When does the code <b>after</b> the yield run?', o: ['After the test that used the fixture has finished', 'Before the test starts', 'Only when the test fails', 'Never'], a: 0, why: 'Code before the yield is setup. The test runs at the yield. Code after it is the teardown, and it runs even if the test failed.' }
+  ];
+  const kt = [
+    { type: 'order', q: 'A test class extends <code>BaseTest</code> and has its own <code>@BeforeEach</code>. Put what happens around <b>one</b> test in order.', items: ['@BeforeAll in BaseTest: Playwright and the browser start (once per class)', '@BeforeEach in BaseTest: a new context and page are created', '@BeforeEach in your class: the test data is prepared', '@Test: the test body runs', '@AfterEach in BaseTest: the context is closed'], why: 'The browser starts once per class, because that is expensive. Setup methods of the superclass run before those of the subclass, so the page exists when your setup uses it.' },
+    { q: 'Why does <code>@BeforeAll</code> in <code>BaseTest</code> work as a normal (not static) method?', o: ['Because the class is marked @TestInstance(PER_CLASS)', 'Because Kotlin has no static methods at all', 'Because JUnit ignores the annotation', 'Because Playwright requires it'], a: 0, why: 'With PER_CLASS, JUnit makes one instance of the test class for all its tests, so @BeforeAll and @AfterAll can be ordinary methods that use the same fields.' }
+  ];
+  mountQuiz(b, state.lang === 'py' ? py : kt, { id: 'lc', persist: false });
+} };
+
+/* ===== 7. Page object or test? ===== */
+WIDGETS.pom = { title: 'Page object or test?', tag: 'classification', init(b) {
+  const opts = ['In the page object', 'In the test', 'In neither: remove it'];
+  const items = [
+    [{ py: 'self.new_todo = page.get_by_placeholder("What needs to be done?")', kt: 'val newTodo: Locator = page.getByPlaceholder("What needs to be done?")' }, 0, 'A locator describes where an element is. That knowledge belongs to the page object.'],
+    [{ py: 'def add(self, title): self.new_todo.fill(title); self.new_todo.press("Enter")', kt: 'fun add(title: String) { newTodo.fill(title); newTodo.press("Enter") }' }, 0, 'How to add a todo is page knowledge, and it has a name from the business.'],
+    [{ py: 'expect(todo.items).to_have_count(1)', kt: 'assertThat(todo.items).hasCount(1)' }, 1, 'What must be true at the end is the point of the test. Different tests expect different things.'],
+    [{ py: 'todo.add("Buy milk")', kt: 'todo.add("Buy milk")' }, 1, 'This is the scenario in business words, with the data of this test.'],
+    [{ py: 'TITLE = "Buy milk"', kt: 'val title = "Buy milk"' }, 1, 'Test data belongs to the test, so that the same page object serves tests with other data.'],
+    [{ py: 'self.page.goto("https://demo.playwright.dev/todomvc/")', kt: 'page.navigate("https://demo.playwright.dev/todomvc/")' }, 0, 'The address of a page is page knowledge, and it lives in an open() method.'],
+    [{ py: 'time.sleep(2)', kt: 'Thread.sleep(2000)' }, 2, 'A fixed wait belongs nowhere. Actions and assertions already wait.'],
+    [{ py: 'def row(self, title): return self.items.filter(has_text=title)', kt: 'fun row(title: String): Locator = items.filter(Locator.FilterOptions().setHasText(title))' }, 0, 'A helper that returns a locator is page knowledge. Tests can assert on what it returns.']
+  ];
+  const ids = items.map(() => uid('po'));
+  b.innerHTML = '<p class="src">Decide where each line should live.</p>' + items.map((it, i) => `<div class="field" style="margin-bottom:10px"><label for="${ids[i]}">${i + 1}. <code>${esc(T(it[0]))}</code></label><select id="${ids[i]}"><option value="">Choose</option>${opts.map((r, j) => `<option value="${j}">${r}</option>`).join('')}</select><div class="fb-slot" id="${ids[i]}-fb"></div></div>`).join('') + '<div class="row"><button class="btn" data-a="check">Check</button><span class="score" data-role="score"></span></div>';
+  $('[data-a=check]', b).onclick = () => {
+    let ok = 0;
+    items.forEach((it, i) => { const v = $('#' + ids[i], b).value; const good = v !== '' && +v === it[1]; if (good) ok++; $('#' + ids[i] + '-fb', b).innerHTML = v === '' ? '' : `<div class="fb ${good ? 'ok' : 'bad'}">${good ? 'Correct. ' : 'Better: ' + opts[it[1]].toLowerCase() + '. '}${it[2]}</div>`; });
+    $('[data-role=score]', b).textContent = `${ok} of ${items.length} correct`;
+  };
+} };
+
+/* ===== 8. Sign in every time, or once? ===== */
+WIDGETS.storage = { title: 'Sign in every time, or once?', tag: 'calculator', init(b) {
+  const id = uid('st');
+  b.innerHTML = `<div class="row">
+    <div class="field"><label for="${id}-n">Number of tests</label><input type="number" id="${id}-n" value="50" min="1" max="2000"></div>
+    <div class="field"><label for="${id}-l">Time to sign in through the form (seconds)</label><input type="number" id="${id}-l" value="4" min="0.5" step="0.5"></div>
+    <div class="field"><label for="${id}-r">Time to start from a saved state (seconds)</label><input type="number" id="${id}-r" value="0.3" min="0" step="0.1"></div></div>
+  <div class="tbl"><table><thead><tr><th>Strategy</th><th>Time spent on signing in</th></tr></thead><tbody data-role="rows"></tbody></table></div><div data-role="note"></div>`;
+  const paint = () => {
+    const n = Math.max(1, +$('#' + id + '-n', b).value || 1), l = Math.max(0, +$('#' + id + '-l', b).value || 0), r = Math.max(0, +$('#' + id + '-r', b).value || 0);
+    const every = n * l, once = l + n * r, saved = every - once;
+    $('[data-role=rows]', b).innerHTML = `<tr><td>Through the form in every test</td><td class="num">${every.toFixed(1)} s (${(every / 60).toFixed(1)} min)</td></tr><tr><td>Once, then a saved storage state</td><td class="num">${once.toFixed(1)} s (${(once / 60).toFixed(1)} min)</td></tr>`;
+    $('[data-role=note]', b).innerHTML = `<div class="fb info"><b>Saved per run:</b> <span class="num">${saved.toFixed(1)} s</span> (${(saved / 60).toFixed(1)} minutes). If the suite runs 20 times a day, that is about ${(saved * 20 / 60).toFixed(0)} minutes of waiting every day. A saved state is reused only by tests that do not test the sign-in itself.</div>`;
+  };
+  $$('input', b).forEach(i => { i.oninput = paint; }); paint();
+} };
