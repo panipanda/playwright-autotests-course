@@ -7,7 +7,7 @@ const vm = require('node:vm');
 
 const root = path.join(__dirname, '..');
 const FILES = [
-  'js/lib.js', 'js/runner.js', 'js/sandbox.js', 'js/core.js', 'js/widgets.js',
+  'js/lib.js', 'js/runner.js', 'js/sandbox.js', 'js/core.js', 'js/widgets.js', 'js/trainers.js',
   'content/en/modules-1-4.js', 'content/en/modules-5-8.js', 'content/en/modules-9-12.js',
   'content/en/cards.js', 'content/en/glossary.js', 'content/en/sources.js'
 ];

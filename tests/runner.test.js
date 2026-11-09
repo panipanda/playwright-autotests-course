@@ -216,7 +216,7 @@ box.fill("Walk the dog")
 box.press("Enter")
 expect(page.get_by_test_id("todo-item")).to_have_count(2)
 page.get_by_test_id("todo-item").filter(has_text="Buy milk").get_by_role("checkbox").check()
-expect(page.get_by_text("1 item left")).to_be_visible()
+expect(page.get_by_test_id("todo-count")).to_have_text("1 item left")
 expect(page.get_by_role("button", name="Clear completed")).to_be_visible()`;
   const r = ok(run('todo', py, 'py'));
   assert.deepEqual(r.actions.map(a => a.type), ['fill', 'press', 'fill', 'press', 'check']);
@@ -225,7 +225,7 @@ box.fill("Buy milk")
 box.press("Enter")
 assertThat(page.getByTestId("todo-item")).hasCount(1)
 page.getByTestId("todo-item").getByRole(AriaRole.CHECKBOX).check()
-assertThat(page.getByText("0 items left")).isVisible()`;
+assertThat(page.getByTestId("todo-count")).hasText("0 items left")`;
   ok(run('todo', kt, 'kt'));
 });
 

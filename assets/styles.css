@@ -201,7 +201,7 @@ li.step:has(input:checked)::before{content:"✓"}
 .st-head{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
 .st-head input{margin-top:.4rem;flex:none}
 .st-why,.st-see{margin:.4rem 0 0;font-size:.94rem}
-.st-why b,.st-see b,.st-do b{display:inline-block;font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-right:6px}
+.st-why>b:first-child,.st-see>b:first-child,.st-do>b:first-child{display:inline-block;font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-right:6px}
 li.step .codeblock{margin:8px 0 4px}
 
 /* ===== code lab and watch-me-code player ===== */
@@ -210,7 +210,7 @@ li.step .codeblock{margin:8px 0 4px}
 :root[data-theme="dark"] .widget.lab .w-head,:root[data-theme="dark"] .widget.watch .w-head{color:#1b1200}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .widget.lab .w-head,:root:not([data-theme="light"]) .widget.watch .w-head{color:#1b1200}}
 .lab-goal{background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:10px 14px;margin-bottom:12px}
-.lab-goal b{font-size:.78rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);display:block}
+.lab-goal>b:first-child{font-size:.78rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);display:block}
 .lab-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:12px;align-items:start}
 @media (max-width:900px){.lab-grid{grid-template-columns:minmax(0,1fr)}}
 textarea.code-in{font-family:var(--mono);font-size:.86rem;line-height:1.55;min-height:230px;tab-size:4;white-space:pre;overflow:auto;background:var(--code);resize:vertical}
@@ -238,6 +238,7 @@ textarea.code-in{font-family:var(--mono);font-size:.86rem;line-height:1.55;min-h
 .sbx table{font-size:.88rem}
 .sbx [data-hl]{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px;background:var(--accent-soft)}
 .sbx [data-hl="bad"]{outline-color:var(--bad);background:var(--bad-soft)}
+.sbx button[data-hl]{background:var(--accent);color:var(--accent-ink)}
 .lab-log{margin:8px 0 0;font-family:var(--mono);font-size:.8rem;border:1px solid var(--rule);border-radius:8px;background:var(--surface);max-height:260px;overflow:auto}
 .log-row{display:grid;grid-template-columns:20px 1fr auto;gap:6px;padding:4px 10px;border-bottom:1px solid var(--rule);cursor:pointer;text-align:left;width:100%;background:transparent;border-left:0;border-right:0;border-top:0;border-radius:0;color:var(--ink)}
 .log-row:last-child{border-bottom:0}
@@ -251,7 +252,7 @@ textarea.code-in{font-family:var(--mono);font-size:.86rem;line-height:1.55;min-h
 .lab-checks li.pass .ico{color:var(--good)}.lab-checks li.fail .ico{color:var(--bad)}.lab-checks li.idle .ico{color:var(--muted)}
 .hint{margin:6px 0}
 .player-note{background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:10px 14px;margin:8px 0;min-height:3.2em}
-.player-note b{font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);display:block}
+.player-note>b:first-child{font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);display:block}
 pre.cb.live{min-height:120px;background:var(--code);border:1px solid var(--rule);border-radius:8px}
 .caret{display:inline-block;width:.5em;height:1em;background:var(--accent);vertical-align:text-bottom;animation:blink 1s steps(1) infinite}
 @keyframes blink{50%{opacity:0}}

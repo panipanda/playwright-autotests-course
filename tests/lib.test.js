@@ -38,7 +38,7 @@ test('code blocks get unique ids and tagged ones are recorded for the examples c
 test('steps() numbers the steps per module and keeps language-only steps hidden by attribute', () => {
   const h = L.steps('m2', [
     { do: 'Create a folder', why: 'Keeps the project together', see: 'An empty folder' },
-    { do: 'Create a virtual environment', why: 'Isolates packages', lang: 'py', code: 'python -m venv .venv' },
+    { do: 'Create a virtual environment', why: 'Isolates packages', lang: 'py', code: L.sh('python -m venv .venv') },
     { do: 'Create build.gradle.kts', why: 'Gradle needs it', lang: 'kt' }
   ]);
   assert.match(h, /data-step="m2:s1"/);
@@ -48,6 +48,8 @@ test('steps() numbers the steps per module and keeps language-only steps hidden 
   assert.match(h, /<li class="step" data-l="kt">/);
   assert.match(h, /<b>Why<\/b> Isolates packages/);
   assert.match(h, /<b>You should see<\/b> An empty folder/);
+  assert.match(h, /Terminal/);
+  assert.match(h, /python -m venv \.venv/);
 });
 
 test('short typed answers ignore case, quotes, backticks and spacing', () => {

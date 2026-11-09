@@ -18,7 +18,8 @@ function codeOne(lang, src, file, label) {
   const id = 'cb' + (++CID);
   const attr = lang ? ` data-l="${lang}"` : '';
   const name = file || label || (lang === 'py' ? 'Python' : lang === 'kt' ? 'Kotlin' : 'Code');
-  return `<div class="codeblock"${attr}><div class="cb-head"><span>${esc(name)}</span><button class="btn ghost sm" data-copy="${id}" aria-label="Copy ${esc(name)}">Copy</button></div><pre class="cb" id="${id}" tabindex="0"><code>${esc(src)}</code></pre></div>`;
+  const body = lang && label !== 'Terminal' && typeof PW !== 'undefined' ? PW.highlight(src, lang) : esc(src);
+  return `<div class="codeblock"${attr}><div class="cb-head"><span>${esc(name)}</span><button class="btn ghost sm" data-copy="${id}" aria-label="Copy ${esc(name)}">Copy</button></div><pre class="cb" id="${id}" tabindex="0"><code>${body}</code></pre></div>`;
 }
 /* code({py, kt, file:{py, kt}}) shows the block for the chosen language. code({all}) shows one block for both.
    sh(...) is the same for terminal commands. */
@@ -30,12 +31,12 @@ function code(o) {
 }
 const sh = o => code(Object.assign({ label: 'Terminal' }, typeof o === 'string' ? { all: o } : o));
 
-/* A step-by-step instruction. Each step: do (what), why (the reason), code (optional), see (the expected result), lang (optional: show for one language only).
+/* A step-by-step instruction. Each step: do (what), why (the reason), code (optional, ready HTML from code() or sh()), see (the expected result), lang (optional: show for one language only).
    The checkbox state is stored under "<module id>:s<number>". */
 function steps(mod, list) {
   return '<ol class="steps">' + list.map((s, i) => {
     const id = mod + ':s' + (i + 1);
-    const c = s.code ? (typeof s.code === 'string' ? sh(s.code) : code(s.code)) : '';
+    const c = s.code || '';
     return `<li class="step"${s.lang ? ` data-l="${s.lang}"` : ''}><label class="st-head"><input type="checkbox" data-step="${id}"><span class="st-do"><b>Do</b> ${s.do}</span></label>${c}<p class="st-why"><b>Why</b> ${s.why}</p>${s.see ? `<p class="st-see"><b>You should see</b> ${s.see}</p>` : ''}</li>`;
   }).join('') + '</ol>';
 }

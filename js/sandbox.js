@@ -75,34 +75,36 @@ SANDBOX.shop = {
   }
 };
 
-/* ===== todo: a list that grows, a counter that changes ===== */
+/* ===== todo: a list that grows, a counter that changes. It mirrors the public TodoMVC demo that the real exercises use. ===== */
 SANDBOX.todo = {
   id: 'todo', title: 'Todo list', start: 'main',
   pages: {
     main: {
-      url: 'https://todo.example/', title: 'Todo list',
+      url: 'https://demo.playwright.dev/todomvc/', title: 'TodoMVC',
       html: `<h1>todos</h1>
-<input id="new-todo" type="text" placeholder="What needs to be done?" aria-label="New todo">
-<ul class="todo" id="list"></ul>
-<p id="count">0 items left</p>
-<button id="clear" hidden>Clear completed</button>`,
-        on(type, n, api, d) {
-          const list = api.el('list');
-          const repaint = () => {
-            const items = api.keys('item'); const left = items.filter(i => !i.attrs.class || !i.attrs.class.includes('completed')).length;
-            api.setText(api.el('count'), left + (left === 1 ? ' item left' : ' items left'));
-            if (items.length - left > 0) api.show(api.el('clear')); else api.hide(api.el('clear'));
-          };
-          if (type === 'keydown' && n.attrs.id === 'new-todo' && d.key === 'Enter') {
-            const text = api.value(n).trim(); if (!text) return;
-            api.append(list, '<li data-key="item" data-testid="todo-item"><input class="toggle" type="checkbox" aria-label="Toggle Todo"><label>' + text.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])) + '</label></li>');
-            api.setValue(n, ''); repaint();
-          } else if (type === 'change' && n.attrs.class === 'toggle') {
-            const li = n.parent; li.attrs.class = n.checked ? 'completed' : ''; repaint();
-          } else if (type === 'click' && n.attrs.id === 'clear') {
-            api.keys('item').filter(i => i.attrs.class === 'completed').forEach(i => api.remove(i)); repaint();
-          }
+<input id="new-todo" class="new-todo" type="text" placeholder="What needs to be done?">
+<ul class="todo-list" id="list"></ul>
+<p><span id="count" data-testid="todo-count"><strong>0</strong> items left</span></p>
+<button id="clear" class="clear-completed" hidden>Clear completed</button>`,
+      on(type, n, api, d) {
+        const list = api.el('list');
+        const repaint = () => {
+          const items = api.keys('item'); const left = items.filter(i => i.attrs.class !== 'completed').length;
+          api.setHtml(api.el('count'), '<strong>' + left + '</strong> ' + (left === 1 ? 'item left' : 'items left'));
+          if (items.length - left > 0) api.show(api.el('clear')); else api.hide(api.el('clear'));
+        };
+        if (type === 'keydown' && n.attrs.id === 'new-todo' && d.key === 'Enter') {
+          const text = api.value(n).trim(); if (!text) return;
+          api.append(list, '<li data-key="item" data-testid="todo-item" class=""><input aria-label="Toggle Todo" class="toggle" type="checkbox" data-key="toggle"><label data-testid="todo-title">' + text.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])) + '</label><button aria-label="Delete" class="destroy">x</button></li>');
+          api.setValue(n, ''); repaint();
+        } else if (type === 'change' && n.attrs.class === 'toggle') {
+          n.parent.attrs.class = n.checked ? 'completed' : ''; repaint();
+        } else if (type === 'click' && n.attrs.class === 'destroy') {
+          api.remove(n.parent); repaint();
+        } else if (type === 'click' && n.attrs.id === 'clear') {
+          api.keys('item').filter(i => i.attrs.class === 'completed').forEach(i => api.remove(i)); repaint();
         }
+      }
     }
   }
 };

@@ -951,7 +951,7 @@ const PW = (function () {
         err = e;
       }
       const hl = S.cur.nodes.filter(id => S.doc.nodes.has(id));
-      S.entries.push({ line: st.line, code: st.text, kind: S.cur.kind, status: err ? 'fail' : S.cur.status, t0, t1: S.clock, ms: S.clock - t0, msg: err ? err.message.split('\n')[0] : S.cur.msg, html: snap(err ? [] : hl, err ? (err.nodes || hl) : []), url: S.url, title: S.title, nodes: err ? (err.nodes || hl) : hl });
+      S.entries.push({ line: st.line, code: st.text, kind: err ? 'error' : S.cur.kind, status: err ? 'fail' : S.cur.status, t0, t1: S.clock, ms: S.clock - t0, msg: err ? err.message.split('\n')[0] : S.cur.msg, html: snap(err ? [] : hl, err ? (err.nodes || hl) : []), url: S.url, title: S.title, nodes: err ? (err.nodes || hl) : hl });
       if (err) { res.error = { kind: err.kind, line: err.line || st.line, text: err.message }; break; }
     }
     res.ok = !res.error; res.clock = S.clock; res.doc = S.doc; res.url = S.url; res.title = S.title;
@@ -979,6 +979,8 @@ const PW = (function () {
           break;
         }
         case 'finalCount': ok = !!result.doc && descendants(result.doc.root).filter(n => n.key === c.key && isVisible(n)).length === c.count; break;
+        case 'nodeWith': ok = !!result.doc && descendants(result.doc.root).some(n => n.key === c.key && textOf(n, false).includes(c.text) && (n.attrs[c.attr] || '') === c.is); break;
+        case 'countWith': ok = !!result.doc && descendants(result.doc.root).filter(n => n.key === c.key && (n.attrs[c.attr] || '') === c.is).length === c.count; break;
         case 'url': ok = result.url === c.url; break;
         case 'via': ok = a.some(x => x.key === c.key && x.kinds.some(k => c.kinds.includes(k))); break;
         case 'uses': ok = result.flags.kinds.some(k => c.kinds.includes(k)); break;
