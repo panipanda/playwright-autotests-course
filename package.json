@@ -1,0 +1,10 @@
+{
+  "name": "playwright-autotests-course",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A free interactive course on test automation with Playwright, in Python or Kotlin",
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "MIT"
+}
