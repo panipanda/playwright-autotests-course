@@ -32,7 +32,7 @@ test('code blocks get unique ids and tagged ones are recorded for the examples c
   const ids = [...(a + b).matchAll(/id="(cb\d+)"/g)].map(m => m[1]);
   assert.equal(new Set(ids).size, ids.length);
   assert.equal(L.SNIPPETS.length, before + 1);
-  assert.deepEqual(L.SNIPPETS[L.SNIPPETS.length - 1], { ex: 'demo-1', py: 'x = 1', kt: 'val x = 1', all: '' });
+  assert.deepEqual(L.SNIPPETS[L.SNIPPETS.length - 1], { ex: 'demo-1', py: 'x = 1', kt: 'val x = 1', all: '', part: false });
 });
 
 test('steps() numbers the steps per module and keeps language-only steps hidden by attribute', () => {

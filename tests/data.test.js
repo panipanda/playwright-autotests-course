@@ -166,9 +166,18 @@ const EX = {
   'fixture-tests': { py: 'python/tests/test_todo_fixture.py' },
   todopage: { py: 'python/pages/todo_page.py', kt: 'kotlin/src/test/kotlin/course/TodoPage.kt' },
   todopom: { py: 'python/tests/test_todo_pom.py', kt: 'kotlin/src/test/kotlin/course/TodoPomTest.kt' },
-  storage: { py: 'python/tests/test_storage_state.py', kt: 'kotlin/src/test/kotlin/course/StorageStateTest.kt' }
+  storage: { py: 'python/tests/test_storage_state.py', kt: 'kotlin/src/test/kotlin/course/StorageStateTest.kt' },
+  'api-network': { py: 'python/tests/test_api_and_network.py', kt: 'kotlin/src/test/kotlin/course/ApiAndNetworkTest.kt' },
+  trace: { kt: 'kotlin/src/test/kotlin/course/TraceTest.kt' },
+  param: { py: 'python/tests/test_parametrized.py', kt: 'kotlin/src/test/kotlin/course/ParametrizedTest.kt' },
+  'param-file': { py: 'python/tests/test_parametrized.py', kt: 'kotlin/src/test/kotlin/course/ParametrizedTest.kt' },
+  baseurl: { py: 'python/tests/test_base_url.py', kt: 'kotlin/src/test/kotlin/course/BaseUrlTest.kt' },
+  'pb-pages': { py: 'python/pages/parabank_pages.py', kt: 'kotlin/src/test/kotlin/course/ParabankPages.kt' },
+  'pb-tests': { py: 'python/tests/test_parabank_project.py', kt: 'kotlin/src/test/kotlin/course/ParabankProjectTest.kt' }
 };
 const clean = s => s.replace(/\r/g, '').replace(/[ \t]+$/gm, '').trim();
+/* for a part of a file: the same lines in the same order, ignoring indentation and blank lines */
+const squash = s => s.replace(/\r/g, '').split('\n').map(l => l.trim()).filter(Boolean).join('\n');
 test('code in the course that is tagged with ex: is exactly the code in examples/', () => {
   assert.ok(SNIPPETS.filter(s => s.ex).length >= 5);
   for (const s of SNIPPETS.filter(x => x.ex)) {
@@ -177,7 +186,9 @@ test('code in the course that is tagged with ex: is exactly the code in examples
       if (!s[lang]) continue;
       const file = path.join(root, 'examples', map[lang]);
       assert.ok(fs.existsSync(file), file);
-      assert.equal(clean(s[lang]), clean(fs.readFileSync(file, 'utf8')), s.ex + ' (' + lang + ') differs from ' + map[lang]);
+      const text = clean(fs.readFileSync(file, 'utf8'));
+      if (s.part) assert.ok(squash(text).includes(squash(s[lang])), s.ex + ' (' + lang + ') is not a part of ' + map[lang]);
+      else assert.equal(clean(s[lang]), text, s.ex + ' (' + lang + ') differs from ' + map[lang]);
     }
   }
 });

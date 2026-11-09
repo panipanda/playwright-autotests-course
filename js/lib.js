@@ -24,7 +24,7 @@ function codeOne(lang, src, file, label) {
 /* code({py, kt, file:{py, kt}}) shows the block for the chosen language. code({all}) shows one block for both.
    sh(...) is the same for terminal commands. */
 function code(o) {
-  if (o.ex) SNIPPETS.push({ ex: o.ex, py: o.py || '', kt: o.kt || '', all: o.all || '' });
+  if (o.ex) SNIPPETS.push({ ex: o.ex, py: o.py || '', kt: o.kt || '', all: o.all || '', part: !!o.part });
   if (o.all != null) return codeOne('', o.all, o.file, o.label);
   const f = o.file || {};
   return (o.py != null ? codeOne('py', o.py, f.py, o.label) : '') + (o.kt != null ? codeOne('kt', o.kt, f.kt, o.label) : '');

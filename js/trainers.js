@@ -38,6 +38,7 @@ WIDGETS.errdecoder = { title: 'Error decoder', tag: 'troubleshooting', init(b) {
     { w: 'kt', e: 'Unresolved reference: getByRole  /  Unresolved reference: Playwright', c: 'The Playwright library is not on the classpath, or an import is missing.', f: { py: '', kt: 'Check that <code>testImplementation("com.microsoft.playwright:playwright:1.64.0")</code> is in <code>build.gradle.kts</code>, reload the Gradle project, and add <code>import com.microsoft.playwright.*</code>.' }, y: 'Kotlin reports what it cannot see. Usually it is a dependency that was not downloaded yet.' },
     { w: 'kt', e: 'Unsupported class file major version  /  Unsupported Java', c: 'Gradle or the Kotlin plugin was started with a Java version that does not match.', f: { py: '', kt: 'Use JDK 17 or newer (this course was tested with 21). In IntelliJ IDEA: Settings, Build Tools, Gradle, Gradle JVM. In the terminal check <code>java -version</code>.' }, y: 'The Java library, Gradle and Kotlin all have to agree on a Java version.' },
     { w: 'both', e: 'net::ERR_NAME_NOT_RESOLVED at https://...', c: 'The browser cannot find that host name: a typo in the address, no internet, or a blocked domain.', f: { py: 'Copy the address into a normal browser. Check the spelling, the proxy and the VPN.', kt: 'Copy the address into a normal browser. Check the spelling, the proxy and the VPN.' }, y: 'This error comes from the browser, not from Playwright, so the test code is probably fine.' },
+    { w: 'both', e: 'Host system is missing dependencies!  /  msvcp140_1.dll', c: 'The browser needs system libraries that this computer does not have. It shows up most often with Firefox and WebKit on Windows, and on Linux machines without the usual graphics libraries.', f: { py: 'Use Chromium, or install the missing pieces: on Windows the Microsoft Visual C++ Redistributable, on Linux <code>playwright install-deps</code>.', kt: 'Use Chromium, or install the missing pieces: on Windows the Microsoft Visual C++ Redistributable, on Linux run <code>./gradlew playwright --args="install-deps"</code>.' }, y: 'Browsers are real programs with real dependencies. The message names exactly which library is missing.' },
     { w: 'both', e: 'Target page, context or browser has been closed', c: 'The test used a page after its context or the browser was closed, for example in a cleanup step that ran too early or in another test.', f: { py: 'Use the page only inside the test that received it. Do not store it in a global variable.', kt: 'Check the order of @AfterEach and @AfterAll, and do not share one page between tests.' }, y: 'Every test should get its own fresh context, so that nothing outlives the test.' }
   ];
   const mine = E.filter(x => x.w === 'both' || x.w === state.lang);
@@ -174,4 +175,73 @@ WIDGETS.storage = { title: 'Sign in every time, or once?', tag: 'calculator', in
     $('[data-role=note]', b).innerHTML = `<div class="fb info"><b>Saved per run:</b> <span class="num">${saved.toFixed(1)} s</span> (${(saved / 60).toFixed(1)} minutes). If the suite runs 20 times a day, that is about ${(saved * 20 / 60).toFixed(0)} minutes of waiting every day. A saved state is reused only by tests that do not test the sign-in itself.</div>`;
   };
   $$('input', b).forEach(i => { i.oninput = paint; }); paint();
+} };
+
+/* ===== 9. Real response or mocked? ===== */
+WIDGETS.network = { title: 'Real response or mocked?', tag: 'experiment', init(b) {
+  const modes = [
+    { n: 'The real server', ui: 'The page shows the real list: Strawberry, Banana, Tomato, Pear, and more.', why: 'This is the most realistic test, but you cannot choose what the server answers, and it may be slow, empty or down.', code: { py: '# nothing to add: the request goes to the real server', kt: '// nothing to add: the request goes to the real server' } },
+    { n: 'A mocked list with one fruit', ui: 'The page shows exactly one fruit: Dragon fruit.', why: 'You control the data, so the test is fast and the same on every run. A good way to test how the page shows a particular list.', code: { py: 'page.route(\n    "**/api/v1/fruits",\n    lambda route: route.fulfill(json=[{"name": "Dragon fruit", "id": 99}]),\n)', kt: 'page.route("**/api/v1/fruits") { route ->\n    route.fulfill(\n        Route.FulfillOptions()\n            .setContentType("application/json")\n            .setBody("""[{"name": "Dragon fruit", "id": 99}]""")\n    )\n}' } },
+    { n: 'A mocked server error (500)', ui: 'The page cannot get the list. What the user sees now is exactly what you want to test: a friendly message, or a blank page?', why: 'Errors are hard to cause on a real server. A mock produces them on demand, so that you can check the error handling of the page.', code: { py: 'page.route(\n    "**/api/v1/fruits",\n    lambda route: route.fulfill(status=500, body="boom"),\n)', kt: 'page.route("**/api/v1/fruits") { route ->\n    route.fulfill(Route.FulfillOptions().setStatus(500).setBody("boom"))\n}' } },
+    { n: 'A request that never arrives', ui: 'The browser behaves as if the network were down.', why: 'Use it to test the page without a connection, or to block things you do not want in a test, such as analytics or ads.', code: { py: 'page.route("**/api/v1/fruits", lambda route: route.abort())', kt: 'page.route("**/api/v1/fruits") { route -> route.abort() }' } }
+  ];
+  const id = uid('net');
+  b.innerHTML = `<p class="src">The demo page asks the server for a list of fruits. Choose what the server answers.</p><div class="row">${modes.map((m, i) => `<button class="btn ${i ? 'ghost' : ''}" data-i="${i}" aria-pressed="${i === 0}">${m.n}</button>`).join('')}</div><div data-role="out" style="margin-top:12px"></div>`;
+  const show = i => {
+    const m = modes[i];
+    $$('[data-i]', b).forEach(x => { const on = +x.dataset.i === i; x.classList.toggle('ghost', !on); x.setAttribute('aria-pressed', on); });
+    $('[data-role=out]', b).innerHTML = `<div class="tbl"><table><tbody><tr><th>Browser asks</th><td><code>GET /api/v1/fruits</code></td></tr><tr><th>${i ? 'Your test intercepts it' : 'Server answers'}</th><td>${i ? 'The route handler answers instead of the server' : 'The real server answers'}</td></tr><tr><th>The user sees</th><td>${m.ui}</td></tr></tbody></table></div>${codeOne(state.lang, T(m.code), null, null)}<p class="src">${m.why}</p>`;
+    $$('[data-copy]', b).forEach(bt => { bt.onclick = () => { const t = document.getElementById(bt.dataset.copy); if (t) copyText(t.textContent, bt); }; });
+  };
+  $$('[data-i]', b).forEach(x => { x.onclick = () => show(+x.dataset.i); }); show(0);
+} };
+
+/* ===== 10a. Flaky detective ===== */
+WIDGETS.flaky = { title: 'Flaky test detective', tag: 'diagnosis', init(b) {
+  const causes = ['A timing guess (sleep, or reading a value once)', 'Tests that depend on each other or share state', 'Test data that collides', 'The environment (network, third party, machine load)', 'A weak locator'];
+  const items = [
+    ['A test passes on a developer laptop and fails on the CI machine about once in five runs. The failing step is an assertion right after a click. The test has a 1-second sleep.', 0, 'The CI machine is slower, and the sleep is a guess. Replace it with a web-first assertion that waits for the real result.'],
+    ['A test passes alone but fails when the whole suite runs. It expects an empty cart, but another test added an item to the same user.', 1, 'Shared state between tests. Give each test its own data, or its own user, and a fresh context.'],
+    ['A registration test fails every second run with "username already exists".', 2, 'The test uses a fixed name. A unique name (a random part) removes the collision.'],
+    ['Tests fail in bursts at night, all with timeouts waiting for a payment provider to answer.', 3, 'A third-party service is slow or down. Mock it for most tests, and keep a few real ones with a generous timeout.'],
+    ['A "Delete" click sometimes removes the wrong row, because the locator is nth(2) and the list order depends on the time of the data load.', 4, 'The locator describes a position, not the thing. Find the row by its content instead.'],
+    ['After a UI change, a test that clicked "Save" sometimes fails with a strict mode violation, because a second "Save" button appears in a pop-up that is slow to close.', 4, 'The locator was not specific enough. Scope it to the dialog or the form that you mean.']
+  ];
+  const ids = items.map(() => uid('fl'));
+  b.innerHTML = '<p class="src">Pick the most likely cause for each symptom.</p>' + items.map((it, i) => `<div class="field" style="margin-bottom:10px"><label for="${ids[i]}">${i + 1}. ${it[0]}</label><select id="${ids[i]}"><option value="">Choose a cause</option>${causes.map((r, j) => `<option value="${j}">${r}</option>`).join('')}</select><div class="fb-slot" id="${ids[i]}-fb"></div></div>`).join('') + '<div class="row"><button class="btn" data-a="check">Check</button><span class="score" data-role="score"></span></div>';
+  $('[data-a=check]', b).onclick = () => {
+    let ok = 0;
+    items.forEach((it, i) => { const v = $('#' + ids[i], b).value; const good = v !== '' && +v === it[1]; if (good) ok++; $('#' + ids[i] + '-fb', b).innerHTML = v === '' ? '' : `<div class="fb ${good ? 'ok' : 'bad'}">${good ? 'Correct. ' : 'More likely: ' + causes[it[1]].toLowerCase() + '. '}${it[2]}</div>`; });
+    $('[data-role=score]', b).textContent = `${ok} of ${items.length} correct`;
+  };
+} };
+
+/* ===== 10b. Read a trace ===== */
+WIDGETS.trace = { title: 'Read a trace', tag: 'investigation', init(b) {
+  const src = {
+    py: 'page.get_by_test_id("product-pen").get_by_role("button", name="Add to cart").click()\npage.get_by_test_id("product-backpack").get_by_role("button", name="Add to cart").click()\nexpect(page.get_by_text("Cart: 2 items")).to_be_visible()\npage.get_by_role("button", name="Remove").click()\nexpect(page.get_by_text("Cart: 1 item")).to_be_visible()',
+    kt: 'page.getByTestId("product-pen").getByRole(AriaRole.BUTTON, Locator.GetByRoleOptions().setName("Add to cart")).click()\npage.getByTestId("product-backpack").getByRole(AriaRole.BUTTON, Locator.GetByRoleOptions().setName("Add to cart")).click()\nassertThat(page.getByText("Cart: 2 items")).isVisible()\npage.getByRole(AriaRole.BUTTON, Page.GetByRoleOptions().setName("Remove")).click()\nassertThat(page.getByText("Cart: 1 item")).isVisible()'
+  };
+  const res = PW.run(SANDBOX.shop, src[state.lang], state.lang);
+  b.innerHTML = `<p class="src">A test failed. This is what a trace shows you: every step, the page at that moment, and the error. Click the steps and look at the page.</p>
+  ${codeOne(state.lang, src[state.lang], null, null)}
+  <div class="lab-grid"><div class="lab-log" role="list" aria-label="Steps of the failed test" style="max-height:340px">${logRows(res.entries)}</div><div>${browserFrame()}</div></div>
+  ${res.error ? `<div class="lab-err" role="status">${esc(res.error.text)}</div>` : ''}<div class="tr-q"></div>`;
+  $$('[data-copy]', b).forEach(bt => { bt.onclick = () => { const t = document.getElementById(bt.dataset.copy); if (t) copyText(t.textContent, bt); }; });
+  const frame = $('.browser', b);
+  const select = i => { $$('.log-row', b).forEach(r => r.setAttribute('aria-current', +r.dataset.i === i ? 'true' : 'false')); showEntry(frame, res.entries[i]); };
+  $$('.log-row', b).forEach(r => { r.onclick = () => select(+r.dataset.i); });
+  select(res.entries.length - 1);
+  mountQuiz($('.tr-q', b), [
+    { q: 'Which step failed, and why?', o: ['The click on "Remove": the locator matches two buttons, so Playwright refuses to guess (strict mode violation)', 'The click on "Add to cart" for the pen: the product is missing', 'The last assertion: the text never appeared', 'The page did not open'], a: 0, why: 'The log shows that the first three steps passed, and the fourth failed with a strict mode violation. The page picture at that step shows two items in the cart, each with its own Remove button.' },
+    { q: 'What is the best fix?', o: ['Find the Remove button inside the row of the item you want to remove', 'Add a sleep before the click', 'Add .first() and move on', 'Raise the timeout to 60 seconds'], a: 0, why: 'The locator was too broad. A row is found by its content (for example the item name), and the button is searched inside it. Position or time would only hide the problem.' }
+  ], { id: 'tr', persist: false });
+} };
+
+/* ===== 11. The CI job ===== */
+WIDGETS.pipeline = { title: 'Build the CI job', tag: 'ordering', init(b) {
+  mountQuiz(b, [
+    { type: 'order', q: 'Put the steps of a CI job that runs your Playwright tests in order.', items: ['Check out the code', state.lang === 'py' ? 'Set up Python' : 'Set up Java', 'Install the dependencies', 'Install the browsers (with their system libraries)', 'Run the tests', 'Upload the reports and traces, even if the tests failed'], why: 'Code first, then the language, then the libraries, then the browsers, then the tests. The upload comes last and must run even when the tests fail, because that is when you need the traces most.' },
+    { q: 'Why does the upload step usually say <code>if: always()</code>?', o: ['Because it must run even when the tests fail, and failures are when you need the report', 'Because uploads are always free', 'Because the test step cannot fail', 'Because GitHub requires it'], a: 0, why: 'By default a step is skipped after a failed step. always() makes it run anyway, so the traces of the failed tests are saved.' }
+  ], { id: 'ci', persist: false });
 } };

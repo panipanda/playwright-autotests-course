@@ -148,8 +148,9 @@ summary{cursor:pointer;font-weight:600;color:var(--accent)}
 .menu-btn{white-space:nowrap}
 @media (max-width:560px){
   .brand{display:none}
-  .meter-txt{font-size:.74rem}
+  .meter-txt,.save-state{display:none}
   .topbar{gap:8px}
+  .meter{min-width:20px}
 }
 @media (max-width:900px){
   .shell{grid-template-columns:minmax(0,1fr);gap:0}

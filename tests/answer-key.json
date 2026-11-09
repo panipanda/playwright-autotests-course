@@ -34,5 +34,74 @@
   "num2.5",
   "mc0",
   "order4"
+ ],
+ "m5": [
+  "mc0",
+  "mc0",
+  "num5",
+  "multi01",
+  "fill3",
+  "mc0",
+  "mc0"
+ ],
+ "m6": [
+  "mc0",
+  "mc0",
+  "mc0",
+  "mc0",
+  "order4",
+  "fill3",
+  "multi012"
+ ],
+ "m7": [
+  "mc0",
+  "multi012",
+  "mc0",
+  "mc0",
+  "mc0",
+  "order4"
+ ],
+ "m8": [
+  "mc0",
+  "mc0",
+  "mc0",
+  "multi012",
+  "num181",
+  "mc0"
+ ],
+ "m9": [
+  "mc0",
+  "multi012",
+  "mc0",
+  "mc0",
+  "fill2",
+  "mc0",
+  "order4"
+ ],
+ "m10": [
+  "mc0",
+  "multi012",
+  "mc0",
+  "mc0",
+  "mc0",
+  "fill3",
+  "order4"
+ ],
+ "m11": [
+  "mc0",
+  "mc0",
+  "mc0",
+  "num5",
+  "mc0",
+  "order6",
+  "mc0"
+ ],
+ "m12": [
+  "mc0",
+  "mc0",
+  "mc0",
+  "multi0123",
+  "mc0",
+  "order5"
  ]
 }
